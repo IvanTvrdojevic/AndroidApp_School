@@ -68,12 +68,17 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp"/>
 
-    <Space
+    <ImageView
+        android:id="@+id/ivImage"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="85dp"
+        android:layout_marginTop="16dp"
+        android:layout_below="@id/tvPriority"
+        android:layout_above="@id/llButtons"
         android:layout_weight="1"/>
 
     <LinearLayout
+        android:id="@+id/llButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"

@@ -1,39 +1,37 @@
 package com.example.projekt;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.TimeZone;
-import java.util.Vector;
 
 public class TaskActivity extends AppCompatActivity {
-    private String user, dateTime, currentTime;
-    private int index, id;
+    private String taskId;
+    private String taskImage;
+    private String dateTime;
     private TextView tvTitle, tvDescription, tvDateTime, tvPriority;
     private Button btnBack, btnTaskDone, btnDateTime;
-    Vector<String> titles = new Vector<>();
-    Vector<String> descriptions = new Vector<>();
-    Vector<String> dateTimes = new Vector<>();
-    Vector<String> priorities = new Vector<>();
-    Vector<Integer> dones = new Vector<>();
-    Vector<Integer> ids = new Vector<>();
-    int numOfTasks;
-
-
+    private ImageView ivImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,20 +45,17 @@ public class TaskActivity extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBack);
         btnTaskDone = findViewById(R.id.btnTaskDone);
         btnDateTime = findViewById(R.id.btnDateTime);
+        ivImage = findViewById(R.id.ivImage);
 
-        user = getIntent().getStringExtra("user");
-        index = getIntent().getIntExtra("index", 0);
-        id = getIntent().getIntExtra("id", 0);
-
-        getListFromDB();
         setTexts();
+
+        taskImage = getIntent().getStringExtra("image");
+        Glide.with(this).load(taskImage).into(ivImage);
 
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(TaskActivity.this, ListActivity.class);
-                intent.putExtra("user", user);
-                startActivity(intent);
+                goToListActivity("");
             }
         });
 
@@ -74,12 +69,70 @@ public class TaskActivity extends AppCompatActivity {
         btnTaskDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                markTaskAsDoneInDB();
-                Intent intent = new Intent(TaskActivity.this, ListActivity.class);
-                intent.putExtra("user", user);
-                startActivity(intent);
+                TaskData task = getTask();
+                task.done = Calendar.getInstance(TimeZone.getDefault()).getTime().toString().substring(4,16);
+                updateUserInFirebase(task, "done");
             }
         });
+    }
+
+    private void setTexts(){
+        taskId = getIntent().getStringExtra("id");
+        tvTitle.setText(getIntent().getStringExtra("title"));
+        tvDescription.setText(getIntent().getStringExtra("description"));
+        tvPriority.setText(getIntent().getStringExtra("priority"));
+
+        String done = getIntent().getStringExtra("done");
+        if (Objects.equals(done, "")) {
+            btnDateTime.setVisibility(View.VISIBLE);
+            btnTaskDone.setVisibility(View.VISIBLE);
+            tvDateTime.setText(getIntent().getStringExtra("deadline"));
+        } else {
+            btnDateTime.setVisibility(View.GONE);
+            btnTaskDone.setVisibility(View.GONE);
+            tvDateTime.setText("TASK FINISHED ON: " + done);
+        }
+    }
+
+    private TaskData getTask(){
+        TaskData task = new TaskData();
+        task.id = taskId;
+        task.title = tvTitle.getText().toString();
+        task.description = tvDescription.getText().toString();
+        task.deadline = tvDateTime.getText().toString();
+        task.priority = tvPriority.getText().toString();
+        task.image = taskImage;
+        task.done = "";
+
+        return task;
+    }
+
+    private void updateUserInFirebase(TaskData task, String showUpdated){
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        CollectionReference ref = FirebaseFirestore.getInstance().collection(currentUser.getEmail());
+        ref
+            .whereEqualTo("id", task.id)
+            .get()
+            .addOnCompleteListener(this, doc -> {
+                List<DocumentSnapshot> resDocs = doc.getResult().getDocuments();
+                if (doc.isSuccessful() && resDocs.size() == 1) {
+                    String docId = resDocs.get(0).getId();
+                    ref.document(docId)
+                        .set(task)
+                        .addOnCompleteListener(this, doc2 -> {
+                            if (doc.isSuccessful()) {
+                                if (Objects.equals(showUpdated, "done"))
+                                    goToListActivity(showUpdated);
+                                else
+                                    Toast.makeText(this, "Deadline changed!", Toast.LENGTH_SHORT);
+                            }
+                            else
+                                Toast.makeText(this, "Task update failed!", Toast.LENGTH_SHORT).show();
+                        });
+                }
+                else
+                    Toast.makeText(this, "Task for update not found!", Toast.LENGTH_SHORT).show();
+            });
     }
 
     private void showDateTimePicker(){
@@ -98,8 +151,8 @@ public class TaskActivity extends AppCompatActivity {
                     public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
                         dateTime = year + "-" + (monthOfYear + 1) + "-" + dayOfMonth + " " + hourOfDay + ":" + minute;
                         tvDateTime.setText(dateTime);
-                        changeDateTime();
-                        System.out.println("datetime" + dateTime);
+                        TaskData task = getTask();
+                        updateUserInFirebase(task, "deadline");
                     }
                 }, hour, minute, false);
                 timePickerDialog.show();
@@ -108,40 +161,10 @@ public class TaskActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
-    private void getListFromDB(){
-        SQLiteDatabase database = openOrCreateDatabase("UsersDatabase.db", Context.MODE_PRIVATE, null);
-        Cursor cursor = database.rawQuery("select id, title, description, dateTime, priority, done from " + user + " where done = false", null);
-        System.out.println(cursor.getColumnNames());
-
-        while (cursor.moveToNext()){
-            numOfTasks += 1;
-            ids.add(cursor.getInt(0));
-            titles.add(cursor.getString(1));
-            descriptions.add(cursor.getString(2));
-            dateTimes.add(cursor.getString(3));
-            priorities.add(cursor.getString(4));
-            dones.add(cursor.getInt(5));
-        }
-        cursor.close();
-        database.close();
-    }
-
-    private void setTexts(){
-        tvTitle.setText(titles.get(index));
-        tvDescription.setText(descriptions.get(index));
-        tvDateTime.setText(dateTimes.get(index));
-        tvPriority.setText(priorities.get(index));
-    }
-
-    private void markTaskAsDoneInDB(){
-        currentTime = Calendar.getInstance(TimeZone.getDefault()).getTime().toString().substring(4,16);
-        SQLiteDatabase database = openOrCreateDatabase("UsersDatabase.db", Context.MODE_PRIVATE, null);
-        database.execSQL("update " + user + " set done = 1, dateTimeDone = " + "'" + currentTime + "'" + " where id = " + Integer.toString(id));
-        database.close();
-    }
-
-    private void changeDateTime(){
-        SQLiteDatabase database = openOrCreateDatabase("UsersDatabase.db", Context.MODE_PRIVATE, null);
-        database.execSQL("update " + user + " set dateTime = " + "'" + dateTime + "'" + " where id = " + Integer.toString(id));
+    private void goToListActivity(String showUpdated) {
+        Intent intent = new Intent(TaskActivity.this, ListActivity.class);
+        if (!Objects.equals(showUpdated, ""))
+            intent.putExtra("updated", showUpdated);
+        startActivity(intent);
     }
 }

@@ -1,23 +1,18 @@
 package com.example.projekt;
 
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class RegisterActivity extends AppCompatActivity {
 
     private EditText etUsername, etPassword, etConfirmPassword;
     private Button btnRegister, btnGoToLogin;
-    private DBHelper dbhelper;
 
     private String username;
 
@@ -31,8 +26,6 @@ public class RegisterActivity extends AppCompatActivity {
         etConfirmPassword = findViewById(R.id.editTextConfirmPassword);
         btnRegister       = findViewById(R.id.btnRegister);
         btnGoToLogin      = findViewById(R.id.btnGoToLogin);
-
-        dbhelper = new DBHelper(this);
 
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,23 +49,18 @@ public class RegisterActivity extends AppCompatActivity {
         String confirmPassword = etConfirmPassword.getText().toString();
         if(checkPassword(password, confirmPassword) == false) return;
 
-        SQLiteDatabase db = dbhelper.getWritableDatabase();
-        if(checkUserInDb(db, username) == true) return;
+        registerUserFirebase(username, password);
+    }
 
-        ContentValues values = new ContentValues();
-        values.put(DBHelper.columnUsername, username);
-        values.put(DBHelper.columnPassword, password);
-        long newRowId = db.insert(DBHelper.tableName, null, values);
-
-        if (newRowId != -1) {
-            Intent intent = new Intent(RegisterActivity.this, ListActivity.class);
-            intent.putExtra("user", username);
-            createUserTable();
-            startActivity(intent);
-        } else {
-            Toast.makeText(this, "Registration failed. Please try again.", Toast.LENGTH_SHORT).show();
-        }
-        db.close();
+    private void registerUserFirebase(String email, String password) {
+        FirebaseAuth.getInstance()
+            .createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this, task -> {
+                if (task.isSuccessful()) {
+                    Intent intent = new Intent(RegisterActivity.this, ListActivity.class);
+                    startActivity(intent);
+                } else Toast.makeText(this, "Registration failed. Please try again.", Toast.LENGTH_SHORT).show();
+            });
     }
 
     private boolean checkPassword(String password, String confirmPassword){
@@ -90,18 +78,4 @@ public class RegisterActivity extends AppCompatActivity {
         }
         return true;
     }
-
-    private boolean checkUserInDb(SQLiteDatabase db, String username){
-        Cursor cursor = db.rawQuery("select * from users where username = ?", new String[] {username});
-        if(cursor.getCount() > 0){
-            Toast.makeText(this, "User exists", Toast.LENGTH_SHORT).show();
-            return true;
-        }
-        else return false;
-    }
-
-  private void createUserTable(){
-        SQLiteDatabase database = openOrCreateDatabase("UsersDatabase.db", Context.MODE_PRIVATE, null);
-        database.execSQL("CREATE TABLE IF NOT EXISTS "  + username + " (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, description TEXT, dateTime TEXT, priority TEXT, done INTEGER, dateTimeDone TEXT)");
-  }
 }

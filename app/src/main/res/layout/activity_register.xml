@@ -15,6 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Username"
+            android:text=""
             android:inputType="textPersonName"
             android:padding="10dp"
             android:layout_marginBottom="16dp" />
@@ -24,6 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Password"
+            android:text=""
             android:inputType="textPassword"
             android:padding="10dp"
             android:layout_marginBottom="16dp" />
@@ -33,6 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Confirm Password"
+            android:text="aaaaaaaaa"
             android:inputType="textPassword"
             android:padding="10dp"
             android:layout_marginBottom="32dp" />

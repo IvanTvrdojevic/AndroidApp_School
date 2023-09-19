@@ -15,6 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Username"
+            android:text=""
             android:inputType="textPersonName"
             android:padding="10dp"
             android:layout_marginBottom="16dp" />
@@ -24,6 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Password"
+            android:text=""
             android:inputType="textPassword"
             android:padding="10dp"
             android:layout_marginBottom="16dp" />
@@ -31,19 +33,19 @@
         <Button
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Login"
-            android:textColor="@android:color/white"
+            android:layout_height="63dp"
             android:background="@android:color/darker_gray"
-            android:padding="12dp" />
+            android:padding="12dp"
+            android:text="Login"
+            android:textColor="@android:color/white" />
 
         <Button
             android:id="@+id/btnGoToRegister"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="Dont have an account? Register here."
-            android:textColor="@android:color/white"
-            android:layout_marginTop="16dp" />
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
 </ScrollView>

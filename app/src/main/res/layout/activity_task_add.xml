@@ -49,6 +49,24 @@
         android:layout_marginTop="16dp"
         android:layout_below="@id/tvDateTime"/>
 
+
+    <Button
+        android:id="@+id/btnPick"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pick image..."
+        android:layout_marginTop="16dp"
+        android:layout_below="@id/spinner"/>
+
+    <ImageView
+        android:id="@+id/ivImage"
+        android:layout_width="match_parent"
+        android:layout_height="85dp"
+        android:layout_marginTop="16dp"
+        android:layout_below="@id/btnPick"
+        android:layout_above="@id/btnDone"/>
+
+
     <!-- Button near the bottom of the screen -->
     <Button
         android:id="@+id/btnDone"
