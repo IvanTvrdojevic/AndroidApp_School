@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "142291727744",
+    "project_id": "projektrma",
+    "storage_bucket": "projektrma.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:142291727744:android:e4d9d3eee73a4dd2fb3d65",
+        "android_client_info": {
+          "package_name": "com.example.projekt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxrWuzbybIlMXBr8563XnGvRXlQbcolEU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
